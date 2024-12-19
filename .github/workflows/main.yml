@@ -1,4 +1,4 @@
-name: Github Actions workflow
+name: GitHub Actions workflow
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-
+    
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
@@ -29,10 +29,10 @@ jobs:
 
     - name: Install dependencies
       run: npm install
-
+    
     - name: Build the CMS
       run: npm run build
-
+    
     - name: Upload main build
       uses: actions/upload-artifact@v3
       with:
@@ -47,24 +47,17 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3  # Fixed indentation here
-
-    - name: Establish SSH connection for deployment
-      run: |
-        sudo apt-get install -y openssh-client
-        mkdir -p ~/.ssh
-        ssh-keyscan ${{ secrets.LINUX_SERVER_IP }} >> ~/.ssh/known_hosts
-        echo ${{ secrets.SSH_PRIVATE_KEY_PREVIEW }} | tr -d '\r' | ssh-add -
-        chmod 600 ~/.ssh/known_hosts
+      uses: actions/checkout@v3
 
     - name: Download build artifact
       uses: actions/download-artifact@v3
       with:
         name: main-build
         path: ./build
-
-    - name: Deploying to Linux server
+    - name: Deploying on GitHub runner
       run: |
         deployfilename=$(ls build)
-        echo "Uploading $deployfilename to the server"
-        scp -oStrictHostKeyChecking=no build/$deployfilename ${{ secrets.LINUX_USER }}@${{ secrets.LINUX_SERVER_IP }}:/tmp/SES_CHANGES
+        echo "Deploying $deployfilename to the github runner"
+        mkdir -p $GITHUB_WORKSPACE/deployed
+        cp build/$deployfilename $GITHUB_WORKSPACE/deployed/
+        echo "Deployed file location: $GITHUB_WORKSPACE/deployed/$deployfilename"
