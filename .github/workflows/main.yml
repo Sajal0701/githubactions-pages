@@ -37,7 +37,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: main-build
-        path: ./build
+        path: ./public
 
   deploy:
     name: Deploy
@@ -53,11 +53,11 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: main-build
-        path: ./build
+        path: ./public
     - name: Deploying on GitHub runner
       run: |
-        deployfilename=$(ls build)
+        deployfilename=$(ls public)
         echo "Deploying $deployfilename to the github runner"
         mkdir -p $GITHUB_WORKSPACE/deployed
-        cp build/$deployfilename $GITHUB_WORKSPACE/deployed/
+        cp public/$deployfilename $GITHUB_WORKSPACE/deployed/
         echo "Deployed file location: $GITHUB_WORKSPACE/deployed/$deployfilename"
