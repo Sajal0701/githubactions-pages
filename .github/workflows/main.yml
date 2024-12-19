@@ -1,69 +1,70 @@
 name: Github Actions workflow
 
 on:
-    push:
-        branches:
-            -main
+  push:
+    branches:
+      - main
 
 jobs:
-    build_main:
-        name: Build
-        runs-on: ubuntu-latest
+  build_main:
+    name: Build
+    runs-on: ubuntu-latest
 
-        steps:
-        - name: Checkout code
-          uses: actions/checkout@v3
-        
-        - name: Set up Node.js
-          uses: actions/setup-node@v3
-            with:
-              node-version: '18.15.0'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-        - name: Cache node modules
-            uses: actions/cache@v3
-            with:
-                path: node_modules
-                key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
-                restore-keys: |
-                    ${{ runner.os }}-node-modules-
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.15.0'
 
-        - name: Install dependencies
-            run: npm install
-        
-        -name: Building the CMS
-            run: npm run build
-        
-        - name: Upload main build
-            uses: actions/upload-artifact@v3
-            with:
-                name: main-build
-                path: ./build
-    deploy:
-        name: Deploy
-        needs: build_main
-        runs-on: ubuntu-latest
-        if: github.ref == 'refs/heads/main'
+    - name: Cache node modules
+      uses: actions/cache@v3
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-modules-
 
-        steps:
-        - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Install dependencies
+      run: npm install
 
-        - name: establishsing SSH connection for deployment
-            run: |
-                sudo apt-get install -y openssh-client
-                mkdir -p ~/.ssh
-                ssh-keyscan ${{ secrets.LINUX_SERVER_IP }} >> ~/.ssh/known_hosts
-                echo ${{ secrets.SSH_PRIVATE_KEY_PREVIEW }} | tr -d '\r' | ssh-add -
-                chmod 777 ~/.ssh/known_hosts
+    - name: Build the CMS
+      run: npm run build
 
-        - name: Download build artifact
-            uses: actions/download-artifact@v3
-            with:
-                name: main-build
-                path: ./build
+    - name: Upload main build
+      uses: actions/upload-artifact@v3
+      with:
+        name: main-build
+        path: ./build
 
-        - name: Deploying to Linux server
-            run: |
-                deployfilename=$(ls build)
-                echo "Uploading $deployfilename to the server"
-                scp -oStrictHostKeyChecking=no build/$deployfilename ${{ secrets.LINUX_USER }}@${{ secrets.LINUX_SERVER_IP }}:/tmp/SES_CHANGES
+  deploy:
+    name: Deploy
+    needs: build_main
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3  # Fixed indentation here
+
+    - name: Establish SSH connection for deployment
+      run: |
+        sudo apt-get install -y openssh-client
+        mkdir -p ~/.ssh
+        ssh-keyscan ${{ secrets.LINUX_SERVER_IP }} >> ~/.ssh/known_hosts
+        echo ${{ secrets.SSH_PRIVATE_KEY_PREVIEW }} | tr -d '\r' | ssh-add -
+        chmod 600 ~/.ssh/known_hosts
+
+    - name: Download build artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: main-build
+        path: ./build
+
+    - name: Deploying to Linux server
+      run: |
+        deployfilename=$(ls build)
+        echo "Uploading $deployfilename to the server"
+        scp -oStrictHostKeyChecking=no build/$deployfilename ${{ secrets.LINUX_USER }}@${{ secrets.LINUX_SERVER_IP }}:/tmp/SES_CHANGES
