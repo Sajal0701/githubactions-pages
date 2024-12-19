@@ -54,10 +54,12 @@ jobs:
       with:
         name: main-build
         path: ./public
+    - name: List contents of public directory
+      run: ls -la public
     - name: Deploying on GitHub runner
       run: |
         deployfilename=$(ls public)
         echo "Deploying $deployfilename to the github runner"
         mkdir -p $GITHUB_WORKSPACE/deployed
-        cp public/$deployfilename $GITHUB_WORKSPACE/deployed/
-        echo "Deployed file location: $GITHUB_WORKSPACE/deployed/$deployfilename"
+        cp -r public/* $GITHUB_WORKSPACE/deployed/
+        echo "Deployed files are located in: $GITHUB_WORKSPACE/deployed/"
